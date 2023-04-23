@@ -27,10 +27,6 @@ CREATE TABLE student_hobby (
     date_start  TIMESTAMP NOT NULL,
     date_finish DATE
 );
-<<<<<<< HEAD
---данные
-=======
->>>>>>> 5db9debd74fc22f3fb0f5ee405cd77222d647f1c
 INSERT INTO student (id, name, surname, n_group, date_birth, score) VALUES (1, 'Иван', 'Иванов', 2222, '09-09-1999', 4.02);
 INSERT INTO student (id, name, surname, n_group, date_birth, score) VALUES (2, 'Михаил', 'Михайлов', 4032, '03-12-1997', 3.25);
 INSERT INTO student (id, name, surname, n_group, date_birth, score) VALUES (3, 'Виктория', 'Николаева', 4011, '11-23-1994', 4.23);
