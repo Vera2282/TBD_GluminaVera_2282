@@ -61,6 +61,7 @@ Select name, risk
 from hobby
 ORDER BY risk DESC
 LIMIT 3;
+--____________________________________________________________________________________________________
 --2.2 group functions
 --1Выведите номера групп и количество студентов, обучающихся в них
  SELECT COUNT(n_group), n_group
@@ -100,8 +101,53 @@ SELECT n_group, COUNT(n_group), MAX(score), MIN(score)
 FROM student
 GROUP BY n_group;
 --9 Вывести студента/ов, который/ые имеют наибольший балл в заданной группе
+--10
+--_______________________________________________________________________
+--2.3
+--1
+SELECT student.name, student.surname, hobby.name
+FROM student, hobby, student_hobby 
+WHERE student_hobby.student_id = student_id AND student_hobby.hobby_id = hobby.id;
+--2
+SELECT student.name, student.surname, student_hobby.date_start
+FROM student, student_hobby
+WHERE student.id = student_hobby.student_id AND student_hobby.date_finish IS NULL
+ORDER BY student_hobby.date_start
+LIMIT 1;
+--3
 
-
-
-
-
+--4
+SELECT student.name, student.surname, student.n_group, student.date_birth, zpr.monthes, zpr.name
+FROM student
+INNER JOIN
+(SELECT (to_char(student_hobby.date_finish, 'MM')::numeric(10,0) + to_char(student_hobby.date_finish, 'YYYY')::numeric(10,0) * 12) - (to_char(student_hobby.date_start, 'MM')::numeric(10,0) + to_char(student_hobby.date_start, 'YYYY')::numeric(10,0) * 12) as monthes, student_hobby.student_id, hobby.name
+FROM student_hobby, hobby
+WHERE hobby.id = student_hobby.id) zpr
+ON zpr.student_id = student.id
+--5
+--6
+SELECT DISTINCT student.n_group, avg(student.score)::numeric(3,2)
+FROM student
+INNER JOIN(SELECT DISTINCT student_hobby.student_id
+FROM student_hobby, hobby
+WHERE student_hobby.hobby_id = hobby.id AND student_hobby.date_finish IS NULL) zpr
+ON zpr.student_id = student.id
+GROUP BY student.n_group
+--7
+SELECT hobby.name, hobby.risk, -1 * (to_char(zpr.dl, 'YYYY')::numeric(5,0) * 12 + to_char(zpr.dl, 'MM')::numeric(5,0)) + (to_char(now(), 'YYYY')::numeric(5,0) * 12 + to_char(now(),'MM')::numeric(5,0))
+FROM hobby
+INNER JOIN(
+SELECT student_hobby.hobby_id, min(student_hobby.date_start) as dl, student_hobby.student_id
+FROM student_hobby
+GROUP BY student_hobby.student_id, student_hobby.hobby_id
+HAVING student_hobby.student_id = 3
+LIMIT 1) zpr
+ON zpr.hobby_id = hobby.id
+--8
+SELECT hobby.name
+FROM student
+INNER JOIN student_hobby on student_hobby.student_id = student.id
+INNER JOIN hobby on hobby.id = student_hobby.hobby_id
+WHERE student.score = (SELECT max(student.score)
+FROM student)
+--
