@@ -62,7 +62,40 @@ from hobby
 ORDER BY risk DESC
 LIMIT 3;
 --2.2 group functions
-
+--1Выведите номера групп и количество студентов, обучающихся в них
+ SELECT COUNT(n_group), n_group
+FROM student
+GROUP BY n_group
+--2 Выведите для каждой группы максимальный средний балл
+SELECT MAX(score), n_group
+FROM student
+GROUP BY n_group
+--3 Подсчитать количество студентов с каждой фамилией
+SELECT COUNT(surname), surname
+FROM student
+GROUP BY surname
+--4Подсчитать студентов, которые родились в каждом году
+SELECT COUNT(*), to_char(date_birth,'YYYY')
+FROM student
+GROUP BY to_char(date_birth,'YYYY')
+--5Для студентов каждого курса подсчитать средний балл !(Substr)
+SELECT substr(CAST(n_group as text), 1, 1), avg(score) AverageScore
+FROM student
+group by substr(CAST(n_group as text), 1, 1)
+--6Для студентов заданного курса вывести один номер группы с максимальным средним баллом
+SELECT  n_group, AVG (score) AS avg_sc
+FROM student 
+WHERE n_group::text LIKE '4%'
+GROUP BY  n_group 
+ORDER BY avg_sc DESC
+LIMIT 1;
+--7Для каждой группы подсчитать средний балл, вывести на экран только те номера групп и их средний балл, в которых он менее или равен 3.5. Отсортировать по от меньшего среднего балла к большему.
+Select n_group, AVG(score) AS avg_sc
+from student
+GROUP BY n_group
+HAVING(AVG(score) <= 3.5)
+ORDER BY avg_sc ASC;
+--8
 
 
 
