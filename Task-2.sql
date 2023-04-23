@@ -95,7 +95,12 @@ from student
 GROUP BY n_group
 HAVING(AVG(score) <= 3.5)
 ORDER BY avg_sc ASC;
---8
+--8 Для каждой группы в одном запросе вывести количество студентов, максимальный балл в группе, средний балл в группе, минимальный балл в группе
+SELECT n_group, COUNT(n_group), MAX(score), MIN(score)
+FROM student
+GROUP BY n_group;
+--9 Вывести студента/ов, который/ые имеют наибольший балл в заданной группе
+
 
 
 
