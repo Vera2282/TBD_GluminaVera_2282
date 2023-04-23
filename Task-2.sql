@@ -61,6 +61,8 @@ Select name, risk
 from hobby
 ORDER BY risk DESC
 LIMIT 3;
+--2.2 group functions
+
 
 
 
