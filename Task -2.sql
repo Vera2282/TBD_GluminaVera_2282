@@ -101,7 +101,21 @@ SELECT n_group, COUNT(n_group), MAX(score), MIN(score)
 FROM student
 GROUP BY n_group;
 --9 Вывести студента/ов, который/ые имеют наибольший балл в заданной группе
+SELECT n_group, name 
+FROM student
+WHERE score = (SELECT max(score) 
+FROM student) 
+GROUP BY n_group, name
 --10
+SELECT stu.n_group, stu.name, stu.score
+FROM student stu
+JOIN (
+SELECT n_group, MAX(score) AS max_score
+FROM student
+GROUP BY n_group
+) stu_max ON stu.n_group = stu_max.n_group AND stu.score = stu_max.max_score
+ORDER BY stu.n_group;
+
 --_______________________________________________________________________
 --2.3
 --1
