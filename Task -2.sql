@@ -116,12 +116,12 @@ GROUP BY n_group
 ) stu_max ON stu.n_group = stu_max.n_group AND stu.score = stu_max.max_score
 ORDER BY stu.n_group;
 
---_______________________________________________________________________
+--_____________________________________________________открой файл_ питоновский_________________
 --2.3
 --1
 SELECT student.name, student.surname, hobby.name
-FROM student, hobby, student_hobby 
-WHERE student_hobby.student_id = student_id AND student_hobby.hobby_id = hobby.id;
+FROM student INNER JOIN hobby 
+ON student.id = hobby.id;
 --2
 SELECT student.name, student.surname, student_hobby.date_start
 FROM student, student_hobby
@@ -129,7 +129,14 @@ WHERE student.id = student_hobby.student_id AND student_hobby.date_finish IS NUL
 ORDER BY student_hobby.date_start
 LIMIT 1;
 --3
-
+SELECT st.name, st.surname, st.date_birth, AVG(score), SUM(h.risk)
+FROM student st INNER JOIN student_hobby sh
+ON st.id = sh.student_id
+INNER JOIN hobby h
+ON sh.hobby_id = h.id
+WHERE sh.date_finish IS NULL
+GROUP BY st.name, st.surname, st.score, st.date_birth
+HAVING SUM(h.risk) > 0.9 AND st.score > (SELECT AVG(score) FROM student)
 --4
 SELECT student.name, student.surname, student.n_group, student.date_birth, zpr.monthes, zpr.name
 FROM student
@@ -139,6 +146,12 @@ FROM student_hobby, hobby
 WHERE hobby.id = student_hobby.id) zpr
 ON zpr.student_id = student.id
 --5
+SELECT st.surname, st.name, st.date_birth, COUNT(sh.hobby_id)
+FROM student st INNER JOIN student_hobby sh
+ON st.id = sh.student_id
+WHERE extract(year from age(now()::date,st.date_birth))=20 AND (sh.date_finish IS Null)
+GROUP BY st.surname, st.name, st.date_birth
+HAVING COUNT(sh.hobby_id) > 1
 --6
 SELECT DISTINCT student.n_group, avg(student.score)::numeric(3,2)
 FROM student
@@ -148,19 +161,197 @@ WHERE student_hobby.hobby_id = hobby.id AND student_hobby.date_finish IS NULL) z
 ON zpr.student_id = student.id
 GROUP BY student.n_group
 --7
-SELECT hobby.name, hobby.risk, -1 * (to_char(zpr.dl, 'YYYY')::numeric(5,0) * 12 + to_char(zpr.dl, 'MM')::numeric(5,0)) + (to_char(now(), 'YYYY')::numeric(5,0) * 12 + to_char(now(),'MM')::numeric(5,0))
-FROM hobby
-INNER JOIN(
-SELECT student_hobby.hobby_id, min(student_hobby.date_start) as dl, student_hobby.student_id
-FROM student_hobby
-GROUP BY student_hobby.student_id, student_hobby.hobby_id
-HAVING student_hobby.student_id = 3
-LIMIT 1) zpr
-ON zpr.hobby_id = hobby.id
+Select h.name, h.risk, extract (year from age(now()::date, sh.date_start)) * 12 + extract(month from age(now()::date, sh.date_start)) as length_hobby, st.n_group
+FROM hobby h INNER JOIN student_hobby sh
+ON h.id = sh.hobby_id
+INNER JOIN student st
+ON sh.student_id = st.id
+WHERE (sh.date_finish IS null)
+ORDER BY sh.date_start ASC
 --8
-SELECT hobby.name
+SELECT st.n_group, st.name,st.surname, h.name
+FROM student st INNER JOIN student_hobby sh
+ON st.id = sh.student_id
+INNER JOIN hobby h
+ON sh.hobby_id = h.id
+WHERE sh.date_finish is not NULL
+GROUP BY st.n_group, st.name, h.name, st.surname
+--9
+SELECT DISTINCT h.name
+FROM student st INNER JOIN student_hobby sh
+ON st.id = sh.student_id
+INNER JOIN hobby h
+ON sh.hobby_id = h.id
+WHERE st.n
+--10
+SELECT DISTINCT substr(st.n_group::varchar,1,1) AS n_course
+FROM student st INNER JOIN student_hobby sh
+ON st.id = sh.student_id
+INNER JOIN hobby h
+ON sh.hobby_id = h.id
+WHERE (sh.date_finish IS Null)
+GROUP BY st.surname, st.name, st.n_group
+
+SELECT substr(t.course::varchar,1,1) as course
+FROM
+(
+SELECT substr(s.n_group::varchar,1,1) as course, count(*) as all_students, SUM(CASE WHEN sh.date_finish IS NULL THEN 1 ELSE 0 END) as students_h
+FROM student s
+INNER JOIN student_hobby sh ON s.id = sh.student_id
+INNER JOIN hobby h ON h.id = sh.hobby_id
+GROUP BY substr(s.n_group::varchar,1,1)
+) t
+WHERE t.all_students/t.students_h >= 0.5
+--11
+Select n_group
+From
+(
+Select n_group, COUNT(*) as all_students, SUM(CASE WHEN score>=4 THEN 1 ELSE 0 END) as good_students
+From student
+GROUP BY n_group
+) t
+WHERE all_students/good_students >= 0.6
+--12
+Select LEFT(n_group::text,1), COUNT(DISTINCT(hobby.name))
+From student
+INNER JOIN student_hobby ON student.id = student_hobby.student_id
+INNER JOIN hobby ON hobby.id = student_hobby.hobby_id,
+WHERE (student_hobby.date_finish is NULL)
+GROUP BY n_group
+ORDER BY n_group
+--13
+Select LEFT(n_group::text,1) ,student.surname, student.name, student.date_birth
+From student
+INNER JOIN student_hobby ON student.id = student_hobby.student_id
+INNER JOIN hobby ON hobby.id = student_hobby.hobby_id
+WHERE (score = 5 and student_hobby.student_id is null)
+GROUP BY n_group, student.surname, student.name, student.date_birth
+ORDER BY n_group DESC, date_birth
+--14
+CREATE OR REPLACE VIEW Students AS
+SELECT student.id, student.surname, student.name, student.n_group, student.date_birth FROM student
+INNER JOIN student_hobby ON student.id = student_hobby.student_id
+INNER JOIN hobby ON hobby.id = student_hobby.hobby_id
+WHERE student_hobby.date_finish is null and extract(year from age(CURRENT_DATE, date_birth)) >=5
+--15
+SELECT h.name, COUNT(sh.student_id) AS stud_on_hobby
+FROM student_hobby sh inner join hobby h
+ON sh.hobby_id = h.id
+GROUP BY hobby_id, h.name
+ORDER BY stud_on_hobby DESC
+--16
+SELECT h.id as most_popular_hobby_id 
+FROM student_hobby sh INNER JOIN hobby h
+ON sh.hobby_id = h.id
+GROUP BY h.id
+ORDER BY COUNT(sh.student_id)  desc
+limit 1
+--17
+SELECT h.name, h.risk,st.name,st.n_group,
+extract (year from age(now()::date, sh.date_start)) * 12 + extract(month from age(now()::date, sh.date_start)) as da
+FROM student st inner join student_hobby sh
+ON st.id = sh.student_id
+INNER JOIN hobby h
+ON sh.hobby_id = h.id
+ORDER BY da DESC limit 10
+--18
+SELECT h.risk AS most_risk_hobby_id 
+FROM hobby h
+--WHERE risk = (SELECT MAX(risk)FROM hobby)
+ORDER BY risk DESC
+limit 3
+--19
+SELECT st.name,st.surname
+FROM student st
+INNER JOIN
+(SELECT DISTINCT sh.student_id, extract(day from (justify_days(now() - sh.date_start))) as countofdays
+FROM student_hobby sh
+WHERE sh.date_finish IS NULL
+ORDER BY countofdays DESC) tt
+ON tt.student_id = st.id
+ORDER BY countofdays DESC LIMIT 10
+--20
+SELECT DISTINCT st.n_group
+FROM student st
+INNER JOIN(
+SELECT st.name,st.surname, st.id
+FROM student st
+INNER JOIN
+(SELECT DISTINCT sh.student_id, extract(day from (justify_days(now() - sh.date_start))) as countofdays
+FROM student_hobby sh
+WHERE sh.date_finish IS NULL
+ORDER BY countofdays DESC) tt
+ON tt.student_id = st.id
+ORDER BY countofdays DESC LIMIT 10
+) tt
+ON tt.id = st.id
+--21
+CREATE OR replace view fio_student AS 
+SELECT name, surname
 FROM student
-INNER JOIN student_hobby on student_hobby.student_id = student.id
-INNER JOIN hobby on hobby.id = student_hobby.hobby_id
-WHERE student.score = (SELECT max(student.score)
-FROM student)
+ORDER BY score DESC
+--22
+CREATE OR REPLACE VIEW Popular_Hobby AS
+SELECT LEFT(student.n_group::text, 1) AS course, hobby.name AS hobby
+FROM student
+INNER JOIN student_hobby ON student.id = student_hobby.student_id
+INNER JOIN hobby ON hobby.id = student_hobby.hobby_id
+GROUP BY course, hobby
+HAVING COUNT(DISTINCT student_hobby.student_id) = (
+SELECT
+MAX(student_count.count)
+FROM (
+SELECT
+COUNT(DISTINCT student_hobby.student_id) AS count,
+LEFT(student.n_group::text, 1) AS course
+FROM
+student
+INNER JOIN student_hobby ON student.id = student_hobby.student_id
+GROUP BY
+course,
+student_hobby.hobby_id
+) AS student_count
+WHERE student_count.course = course
+);
+Select * FROM popular_Hobby;
+--23
+--Представление: найти хобби с максимальным риском среди самых популярных хобби на 2 курсе.
+CREATE OR REPLACE VIEW max_risk_hobby AS
+SELECT hobby.risk
+FROM hobby
+INNER JOIN student_hobby ON hobby.id = student_hobby.hobby_id
+GROUP BY hobby.id
+HAVING COUNT(DISTINCT student_hobby.hobby_id =
+(
+SELECT risk, MAX(score) AS mx_sc
+FROM hobby
+ORDER by mx_sc DESC
+GROUP BY student_hobby.hobby_id
+) AS counts
+)
+LIMIT 1
+--24
+CREATE OR REPLACE VIEW students AS
+SELECT substr(n_group::varchar,1,1) as course,count(*), SUM(CASE WHEN score = 5 THEN 1 ELSE 0 END)
+From student
+GROUP BY course;
+--25
+CREATE OR REPLACE VIEW the_most_popular_hobby AS
+SELECT hobby.name
+FROM hobby
+INNER JOIN student_hobby ON hobby.id = student_hobby.hobby_id,
+GROUP BY hobby.id
+HAVING COUNT(DISTINCT student_hobby.hobby_id) =
+(
+	SELECT MAX(hobby_counts)
+FROM (
+SELECT COUNT(DISTINCT student_hobby.hobby_id) AS hobby_counts
+FROM student_hobby
+GROUP BY student_hobby.hobby_id
+) AS counts
+)
+LIMIT 1;
+--26
+CREATE OR REPLACE VIEW ST2 AS
+SELECT id, surname, name, N_group FROM Students
+WITH CHECK OPTION;
