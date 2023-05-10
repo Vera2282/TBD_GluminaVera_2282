@@ -355,3 +355,58 @@ LIMIT 1;
 CREATE OR REPLACE VIEW ST2 AS
 SELECT id, surname, name, N_group FROM Students
 WITH CHECK OPTION;
+--27
+SELECT 
+  SUBSTR(name, 1, 1) AS first_letter,
+  MAX(score) AS max_score,
+  AVG(score) AS avg_score,
+  MIN(score) AS min_score FROM student
+GROUP BY SUBSTR(name, 1, 1)
+HAVING MAX(score) > 3.6
+ORDER BY first_letter;
+--28
+SELECT surname,LEFT(CAST(student.n_group AS varchar), 1) AS course_number,
+  MAX(score) AS max_score,
+  MIN(score) AS min_score
+FROM student
+GROUP BY surname, LEFT(CAST(student.n_group AS varchar), 1)
+ORDER BY surname;
+--29
+SELECT EXTRACT(year FROM student.date_birth) AS year_of_birth,
+       COUNT(DISTINCT student_hobby.hobby_id) AS hobbies
+FROM student
+JOIN student_hobby ON student.id = student_hobby.student_id
+GROUP BY year_of_birth;
+--30
+SELECT LEFT(student.name, 1) AS first_letter,
+       MAX(hobby.risk) AS max_risk,
+       MIN(hobby.risk) AS min_risk
+FROM student
+JOIN student_hobby ON student.id = student_hobby.student_id
+JOIN hobby ON student_hobby.hobby_id = hobby.id
+GROUP BY first_letter;
+--31
+SELECT EXTRACT(month FROM student.date_birth) AS month_of_birth,
+       AVG(student.score) AS average_score
+FROM student
+JOIN student_hobby ON student.id = student_hobby.student_id
+JOIN hobby ON student_hobby.hobby_id = hobby.id
+WHERE hobby.name = 'Футбол'
+GROUP BY month_of_birth;
+--32
+SELECT concat('Имя: ', student.name, ', фамилия: ', student.surname, ', группа: ', student.n_group) AS output
+FROM student
+WHERE EXISTS (SELECT 1 FROM student_hobby WHERE student.id = student_hobby.student_id);
+--33
+SELECT surname,
+CASE WHEN position('ов' in surname) > 0
+THEN cast(position('ов' in surname) as varchar)
+     ELSE 'не найдено'
+END AS result
+FROM student;
+--34
+SELECT rpad(surname, 10, '#') AS padded_surname
+FROM student;
+--35
+SELECT replace(rpad(surname, 10, '#'), '#', '') AS unpadded_surname
+FROM student;
