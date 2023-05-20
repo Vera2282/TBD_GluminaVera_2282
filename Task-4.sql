@@ -1,5 +1,6 @@
 --1.Удалите всех студентов с неуказанной датой рождения 
-
+DELETE FROM student 
+WHERE date_birth IS NULL;
 --2.
 UPDATE student 
 SET date_birth = '01-01-1999' 
@@ -31,7 +32,14 @@ WHERE id IN (SELECT id FROM student_hobby WHERE date_finish IS NOT NULL);
 INSERT INTO student_hobby (student_id, hobby_id, date_start, date_finish) 
 VALUES (4, 5, '2009-11-15', NULL); 
 --8.
-
+DELETE FROM student_hobby sh1
+WHERE date_start =
+(SELECT MIN(date_start)
+FROM student_hobby sh2
+WHERE sh1.student_id = sh2.student_id
+AND sh1.hobby_id = sh2.hobby_id
+AND sh2.date_finish IS NOT NULL
+AND sh1.date_start > sh2.date_finish);
 --9.
 UPDATE student_hobby 
 SET hobby_id = (SELECT id FROM hobby WHERE name = 'бальные танцы') 
@@ -42,7 +50,9 @@ WHERE hobby_id = (SELECT id FROM hobby WHERE name = 'баскетбол');
 --10.
 INSERT INTO hobby (id, name, risk) VALUES (9,'Учёба', 0.00);
 --11.
-
+UPDATE hobby
+SET hobby_name = 'Учеба'
+WHERE id IN (SELECT score from student WHERE score < 3.2);
 --12.
 UPDATE student
 SET n_group = n_group + 1000
@@ -67,3 +77,4 @@ WHERE student_id IN (
     JOIN Hobby h ON sh.hobby_id = h.id
     WHERE sh.date_start > s.date_birth
 );
+
